@@ -1,0 +1,94 @@
+---
+name: reconcile-docs
+description: Audits and reconciles Markdown project documentation by finding contradictions, stale claims, unclear source-of-truth conflicts, and missing decisions, then producing a cited alignment report. Use when working with ADRs, PRDs, AGENTS.md, CONTEXT.md, DOCUMENTATION-MAP.md, agent guidelines, project context, or requests to reconcile, audit, align, refresh, or validate docs against the codebase.
+---
+
+# Reconcile Docs
+
+## Quick Start
+Use this skill to audit Markdown documentation, validate claims against the codebase when possible, and produce a report-first reconciliation plan. Do not edit files unless the user explicitly asks for edits.
+
+Discovery defaults to Markdown files:
+
+```sh
+rg --files -g '*.md' -g '!**/.git/**' -g '!**/node_modules/**' -g '!**/vendor/**' -g '!**/dist/**' -g '!**/build/**' -g '!**/.next/**' -g '!**/coverage/**' -g '!**/.cache/**'
+```
+
+If the user provides paths, treat those as the primary scope. Broaden scope only if needed and say why.
+
+## Source Of Truth
+Prefer an explicit project-local hierarchy when present, such as `DOCUMENTATION-MAP.md`, `CONTEXT.md`, `AGENTS.md`, or a docs index. If no hierarchy exists, use this default: current user instructions; `AGENTS.md` for agent, process, style, and repo workflow guidance; accepted/canonical ADRs; current PRDs and requirements docs; README and contributor docs; inline implementation notes or code comments; draft, superseded, or stale docs.
+
+Do not treat newer as automatically truer. Use recency only as supporting evidence. Treat `CONTEXT.md` and `DOCUMENTATION-MAP.md` as derived context/navigation docs by default. If either conflicts with source docs and the assumption matters, ask one focused follow-up question before resolving the finding.
+
+## Document Status
+Use lightweight lifecycle terms:
+
+- `draft`: proposal, plan, or incomplete decision
+- `canonical`: active source of truth
+- `superseded`: replaced by another decision or doc
+- `stale`: claim or section no longer supported by stronger docs or code evidence
+
+Prefer claim-level staleness over document-level staleness. Mark a whole document stale only when evidence is broad.
+
+Do not infer staleness from filenames or folders alone. Names can raise suspicion, but stale status requires evidence, code validation, explicit metadata, clear prose, or a user answer.
+
+Preferred metadata is helpful but not mandatory:
+
+```yaml
+---
+status: draft | canonical | superseded | stale
+owner: team-or-person
+last-reviewed: YYYY-MM-DD
+supersedes: path-or-id
+superseded-by: path-or-id
+---
+```
+
+## Workflow
+Use initial-audit mode for broad discovery and maintenance-check mode for changed or selected docs.
+
+1. Discover in-scope Markdown docs and build a source map: path, apparent purpose, status, owner if present, and authority.
+2. Extract concrete claims about architecture, product behavior, workflows, agent guidance, APIs, data, dependencies, and tooling.
+3. Compare docs against each other, then validate claims against the codebase when possible.
+4. Classify unresolved items as `needs code inspection` or `needs human decision`.
+5. Ask one follow-up question at a time when a human decision is needed.
+6. State an assumptions checkpoint before the final report. Pause only when an assumption materially affects scope, authority, or finding validity.
+7. Produce a Documentation Alignment Report.
+
+Code validation is required when possible, but only for claims that map to discoverable artifacts. Inspect source/config files as needed for validation, while keeping documentation discovery Markdown-only. If validation is not possible, ask the user one focused follow-up question.
+
+## Report Format
+Order findings by impact category, not severity:
+
+1. Contradictions that affect implementation or agent behavior
+2. Stale claims validated against the codebase
+3. Unclear source-of-truth conflicts
+4. Missing decisions or unresolved questions
+5. Documentation hygiene issues
+
+Each finding must include exact references whenever possible:
+
+- File path, heading or section, and line number when available
+- Concise paraphrase of the claim, with a minimal quote only if needed
+- Recommended resolution or one follow-up question
+
+For high-confidence findings, propose concrete edits but do not apply them by default.
+
+## Optional Edits
+Only when the user explicitly asks for edits:
+
+- Update contradictory or stale sections.
+- Add missing metadata or cross-links to canonical docs.
+- Mark superseded docs or update existing `CONTEXT.md` / `DOCUMENTATION-MAP.md`.
+
+Do not create `CONTEXT.md` or `DOCUMENTATION-MAP.md` if absent unless the user explicitly asks.
+
+## Must Not
+- Do not silently rewrite project truth.
+- Do not batch unresolved human decisions.
+- Do not generate machine-readable alignment artifacts.
+- Do not include non-Markdown docs in documentation discovery by default.
+- Do not treat derived summaries as canonical unless confirmed.
+- Do not make unsupported claims without file references.
+- Do not use filename or folder patterns as proof that a doc is stale.
